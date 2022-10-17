@@ -1,7 +1,8 @@
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 public class FileReader {
-    private String fileName;
+    private final String fileName;
 
     private String errors = null;
 
@@ -21,7 +22,7 @@ public class FileReader {
 
         try {
             bufferedReader = new BufferedReader(
-                    new InputStreamReader(new FileInputStream(fileName), "UTF8"));
+                    new InputStreamReader(new FileInputStream(fileName), StandardCharsets.UTF_8));
         } catch (Exception e){
             errors = e.toString();
         }
@@ -53,5 +54,7 @@ public class FileReader {
         } catch (IOException e) {
             errors = e.toString();
         }
+
+        bufferedReader = null;
     }
 }

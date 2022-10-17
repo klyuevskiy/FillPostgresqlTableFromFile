@@ -2,17 +2,15 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Savepoint;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 
-public class StringInserter {
-    private Connection connection;
-    private DataBaseArgumentsParser parser;
+public class dataBaseInserter {
+    private final Connection connection;
+    private final DataBaseArgumentsParser parser;
 
     private String errors = null;
 
-    public StringInserter(Connection connection, DataBaseArgumentsParser parser){
+    public dataBaseInserter(Connection connection, DataBaseArgumentsParser parser){
         this.connection = connection;
         this.parser = parser;
     }
@@ -51,7 +49,7 @@ public class StringInserter {
             }
             lineNumber++;
         }
-        if (errors == "")
+        if (errors.isEmpty())
             errors = null;
 
         return isError;
@@ -63,6 +61,7 @@ public class StringInserter {
              String[] parts,
              HashMap<Integer, String> columnsTypeNames) throws Exception {
 
+        // нарушение структуры файла
         if (parts.length > columnsCount){
             throw new Exception(
                     "Cлишком большое количество столбцов. "

@@ -11,8 +11,10 @@ public class Main {
         connection.setAutoCommit(false);
 
         TableAnalizator tableAnalizator = new TableAnalizator(connection, tableName);
+        var columnsMetaData = tableAnalizator.getColumnsMetaData();
 
-        if (tableAnalizator.getColumnsMetaData() == null){
+        // не смогли получить метаданные, значит произошла ошибка
+        if (columnsMetaData == null){
             System.out.println(tableAnalizator.getErrors());
             connection.close();
             return;
@@ -33,9 +35,10 @@ public class Main {
             columnsNames = line.split("\t");
         }
 
-        ColumnsAnalizator columnsAnalizator = new ColumnsAnalizator(tableAnalizator.getColumnsMetaData(), columnsNames);
+        ColumnsAnalizator columnsAnalizator = new ColumnsAnalizator(columnsMetaData, columnsNames);
 
-        if (columnsAnalizator.determineInsertColumns() != null){
+        // не смогли найти соответствия
+        if (!columnsAnalizator.determineInsertColumns()){
             System.out.println(columnsAnalizator.getErrors());
             fileReader.close();
             connection.close();
@@ -45,34 +48,35 @@ public class Main {
         String insertQuery = tableAnalizator.getInsertQuery(columnsNames);
         PreparedStatement insertStatement = connection.prepareStatement(insertQuery);
 
-        StringInserter stringInserter = new StringInserter(connection, new PostgresqlParser());
-        boolean isRollback = stringInserter.insertFromFile(
+        // вставка из файла
+        dataBaseInserter dataBaseInserter = new dataBaseInserter(connection, new PostgresqlParser());
+        boolean hasErrors = dataBaseInserter.insertFromFile(
                 insertStatement,
                 fileReader,
                 columnsNames.length,
                 columnsAnalizator.getColumnsTypeNames());
 
         // если были ошибки, то спросим откатить все вставки или нет
-        if (isRollback) {
-            System.out.println(stringInserter.getErrors());
-            if (isRollback()){
+        if (hasErrors) {
+            System.out.println(dataBaseInserter.getErrors());
+            if (askRollbackData()){
                 connection.rollback();
                 System.out.println("Изменения отменены");
             } else{
-                isRollback = false;
+                hasErrors = false;
             }
         }
 
         fileReader.close();
         connection.commit();
-        if (!isRollback){
+        if (!hasErrors){
             System.out.println("Успешная вставка");
         }
         connection.close();
     }
 
     // спрашиваем про откат всех данных
-    private static boolean isRollback(){
+    private static boolean askRollbackData(){
         boolean isCorrectInput = false;
         char answer = 'y';
 

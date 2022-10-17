@@ -5,7 +5,7 @@ import java.util.HashMap;
 public class ColumnsAnalizator {
     private final String[] columnsNames;
 
-    private ResultSetMetaData columnsMetaData;
+    private final ResultSetMetaData columnsMetaData;
     private HashMap<String, Integer> tableColumnsNames = null;
 
     private HashMap<Integer, String> columnsTypeNames = null;
@@ -21,8 +21,9 @@ public class ColumnsAnalizator {
         if (columnsTypeNames != null)
             return columnsTypeNames;
 
+        // вызовем, вдруг ещё неизвестно соответсвие, если оно есть, то сохранится в поле
         determineInsertColumns();
-        columnsTypeNames = new HashMap<Integer, String>();
+        columnsTypeNames = new HashMap<>();
 
         for(int i = 1; i <=  columnsMetaData.getColumnCount(); i++){
             Integer index = tableColumnsNames.get(columnsMetaData.getColumnName(i).toLowerCase());
@@ -34,26 +35,26 @@ public class ColumnsAnalizator {
         return columnsTypeNames;
     }
 
-    public String getErrors() throws SQLException {
+    public String getErrors() {
         return errors;
     }
 
-    public String determineInsertColumns() throws SQLException {
+    public boolean determineInsertColumns() throws SQLException {
         if (tableColumnsNames != null)
-            return errors;
+            return true;
 
-        tableColumnsNames = new HashMap<String, Integer>();
+        tableColumnsNames = new HashMap<>();
 
         for(int i = 1; i <= columnsMetaData.getColumnCount(); i++){
             tableColumnsNames.put(columnsMetaData.getColumnName(i).toLowerCase(), -1);
         }
 
+        // чисто для удобства присвоим пустую строку
         errors = "";
 
         for (int i = 0; i < columnsNames.length; i++) {
             String lowerCaseColumnName = columnsNames[i].toLowerCase();
             var value = tableColumnsNames.get(lowerCaseColumnName);
-            // такого столбца нет в таблице => ошибка
             // не будем сразу выходить, а накопим все ошибки, чтобы все сразу можно было просмотреть
             if (value == null){
                 errors += "ОШИБКА: Столбца " + columnsNames[i] + " нет в таблице\n";
@@ -67,9 +68,9 @@ public class ColumnsAnalizator {
             }
         }
 
-        if (errors == "")
+        if (errors.isEmpty())
             errors = null;
 
-        return errors;
+        return errors == null;
     }
 }
