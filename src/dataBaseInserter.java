@@ -63,14 +63,10 @@ public class dataBaseInserter {
 
         // нарушение структуры файла
         if (parts.length > columnsCount){
-            throw new Exception(
-                    "Cлишком большое количество столбцов. "
-            );
+            throw new Exception("Cлишком большое количество столбцов.");
         }
         if (parts.length < columnsCount){
-            throw new Exception(
-                    "Слишком маленькое количество столбцов. "
-            );
+            throw new Exception("Слишком маленькое количество столбцов.");
         }
 
         for (int i = 0; i < columnsCount; i++){
