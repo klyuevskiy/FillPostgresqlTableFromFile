@@ -43,6 +43,11 @@ public class ColumnsAnalizator {
         if (tableColumnsNames != null)
             return true;
 
+        if (columnsNames.length == 0){
+            errors = "Не найдены столбцы для вставки";
+            return false;
+        }
+
         tableColumnsNames = new HashMap<>();
 
         for(int i = 1; i <= columnsMetaData.getColumnCount(); i++){
