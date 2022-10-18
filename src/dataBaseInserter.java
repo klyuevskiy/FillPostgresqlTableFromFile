@@ -25,8 +25,6 @@ public class dataBaseInserter {
              int columnsCount,
              HashMap<Integer, String> columnsTypeNames) throws SQLException {
 
-        errors = "";
-
         // точка сохранения, при ошибке будем откатывать один запрос
         Savepoint savepoint = connection.setSavepoint();
         String line;
@@ -40,17 +38,15 @@ public class dataBaseInserter {
                 insertParts(insertStatement, columnsCount, parts, columnsTypeNames);
                 savepoint = connection.setSavepoint();
             } catch (SQLException e){
-                errors += String.format("ОШИБКА строка %d: " + e + "\n", lineNumber);
+                errors = String.format("ОШИБКА строка %d: " + e + "\n", lineNumber);
                 connection.rollback(savepoint);
                 isError = true;
             } catch (Exception e){
-                errors += String.format("ОШИБКА строка %d: " + e + "\n", lineNumber);
+                errors = String.format("ОШИБКА строка %d: " + e + "\n", lineNumber);
                 isError = true;
             }
             lineNumber++;
         }
-        if (errors.isEmpty())
-            errors = null;
 
         return isError;
     }
