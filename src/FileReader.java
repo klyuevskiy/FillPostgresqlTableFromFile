@@ -1,60 +1,24 @@
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 
 public class FileReader {
     private final String fileName;
-
-    private String errors = null;
-
-    BufferedReader bufferedReader = null;
 
     public FileReader(String fileName){
         this.fileName = fileName;
     }
 
-    public String getErrors(){
-        return errors;
-    }
+    public ArrayList<String[]> read() throws IOException {
+        ArrayList<String[]> lines = new ArrayList<>();
 
-    public BufferedReader open() {
-        if (bufferedReader != null)
-            return bufferedReader;
+        try(var bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName), StandardCharsets.UTF_8))) {
+            String line;
 
-        try {
-            bufferedReader = new BufferedReader(
-                    new InputStreamReader(new FileInputStream(fileName), StandardCharsets.UTF_8));
-        } catch (Exception e){
-            errors = e.toString();
+            while ((line = bufferedReader.readLine()) != null) {
+                lines.add(line.split("\t"));
+            }
         }
-
-        return bufferedReader;
-    }
-
-    public String readLine(){
-        if (bufferedReader == null)
-            return null;
-
-        String res = null;
-
-        try{
-            res = bufferedReader.readLine();
-        } catch (IOException e){
-            errors = e.toString();
-        }
-
-        return res;
-    }
-
-    public void close(){
-        if (bufferedReader == null)
-            return;
-
-        try {
-            bufferedReader.close();
-        } catch (IOException e) {
-            errors = e.toString();
-        }
-
-        bufferedReader = null;
+        return lines;
     }
 }

@@ -2,81 +2,54 @@ import java.io.*;
 import java.sql.*;
 
 public class Main {
-    public static void main(String[] args) throws SQLException{
+    public static void main(String[] args){
         String connectionUrl = args[0];
         String tableName = args[1];
         String fileName = args[2];
 
-        Connection connection = DriverManager.getConnection(connectionUrl);
-        connection.setAutoCommit(false);
+        try(Connection connection = DriverManager.getConnection(connectionUrl)){
+            connection.setAutoCommit(false);
 
-        TableAnalizator tableAnalizator = new TableAnalizator(connection, tableName);
-        var columnsMetaData = tableAnalizator.getColumnsMetaData();
+            var lines = new FileReader(fileName).read();
+            if (lines.isEmpty())
+                throw new Exception("Файл с данными пустой");
 
-        // не смогли получить метаданные, значит произошла ошибка
-        if (columnsMetaData == null){
-            System.out.println(tableAnalizator.getErrors());
-            connection.close();
-            return;
-        }
+            String[] columnsNames = lines.get(0);
+            int columnsCount = columnsNames.length;
 
-        String[] columnsNames;
-        String line;
+            var metaData = new MetaDataGetter(connection).getMetaData(tableName);
+            var columnsMatches = new MatchesFinder().findMatches(metaData, columnsNames);
+            PreparedStatement insertStatement = new InsertStatementBuilder(connection).getInsertStatement(tableName, columnsNames);
 
-        FileReader fileReader = new FileReader(fileName);
+            LinesParser linesParser = new LinesParser(lines, metaData, new PostgresqlParser(), columnsMatches, columnsCount);
 
-        // откырваем файл и пытаемся прочесть 1 строку, если где-то ошибка, то выход
-        if (fileReader.open() == null ||
-                (line = fileReader.readLine()) == null) {
-            System.out.println(fileReader.getErrors());
-            connection.close();
-            return;
-        } else {
-            columnsNames = line.split("\t");
-        }
-
-        ColumnsAnalizator columnsAnalizator = new ColumnsAnalizator(columnsMetaData, columnsNames);
-
-        // не смогли найти соответствия
-        if (!columnsAnalizator.determineInsertColumns()){
-            System.out.println(columnsAnalizator.getErrors());
-            fileReader.close();
-            connection.close();
-            return;
-        }
-
-        String insertQuery = tableAnalizator.getInsertQuery(columnsNames);
-        PreparedStatement insertStatement = connection.prepareStatement(insertQuery);
-
-        // вставка из файла
-        dataBaseInserter dataBaseInserter = new dataBaseInserter(connection, new PostgresqlParser());
-        boolean hasErrors = dataBaseInserter.insertFromFile(
-                insertStatement,
-                fileReader,
-                columnsNames.length,
-                columnsAnalizator.getColumnsTypeNames());
-
-        // если были ошибки, то спросим откатить все вставки или нет
-        if (hasErrors) {
-            System.out.println(dataBaseInserter.getErrors());
-            if (askRollbackData()){
-                connection.rollback();
-                System.out.println("Изменения отменены");
-            } else{
-                hasErrors = false;
+            try{
+                new DataBaseInserter(connection).insert(insertStatement, linesParser, columnsCount);
+            } catch (Exception e){
+                System.out.printf("ОШИБКА: %s\n", e.getMessage());
+                if (askRollbackData(connection)){
+                    System.out.println("Изменения отменены");
+                    return;
+                }
             }
-        }
 
-        fileReader.close();
-        connection.commit();
-        if (!hasErrors){
+            connection.commit();
             System.out.println("Успешная вставка");
+
+        } catch (Exception e) {
+            System.out.printf("ОШИБКА: %s\n", e.getMessage());
         }
-        connection.close();
+    }
+
+    private static boolean askRollbackData(Connection connection) throws SQLException {
+        boolean isRollback = getUserAnswerRollback();
+        if (isRollback)
+            connection.rollback();
+        return isRollback;
     }
 
     // спрашиваем про откат всех данных
-    private static boolean askRollbackData(){
+    private static boolean getUserAnswerRollback(){
         boolean isCorrectInput = false;
         char answer = 'y';
 
