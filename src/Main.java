@@ -2,19 +2,19 @@ import java.io.*;
 import java.sql.*;
 
 public class Main {
-    public static void main(String[] args){
+    public static void main(String[] args) {
         String connectionUrl = args[0];
         String tableName = args[1];
         String fileName = args[2];
 
-        try(Connection connection = DriverManager.getConnection(connectionUrl)){
+        try (Connection connection = DriverManager.getConnection(connectionUrl)) {
             connection.setAutoCommit(false);
 
-            try{
+            try {
                 DataBaseInserter.insert(connection, new FileReader(fileName), tableName);
-            } catch (Exception e){
+            } catch (Exception e) {
                 printError(e);
-                if (askRollbackData(connection)){
+                if (askRollbackData(connection)) {
                     System.out.println("Изменения отменены");
                     return;
                 }
@@ -28,7 +28,7 @@ public class Main {
         }
     }
 
-    private static void printError(Exception e){
+    private static void printError(Exception e) {
         System.out.printf("ОШИБКА: %s\n", e.getMessage());
     }
 
@@ -40,16 +40,16 @@ public class Main {
     }
 
     // спрашиваем про откат всех данных
-    private static boolean getUserAnswerRollback(){
+    private static boolean getUserAnswerRollback() {
         boolean isCorrectInput = false;
         char answer = 'y';
 
-        while (!isCorrectInput){
-            try{
+        while (!isCorrectInput) {
+            try {
                 System.out.println("Произошли ошибки при вставке данных. Откатить ВСЕ вставки? y/n");
                 answer = Character.toLowerCase((char) System.in.read());
                 isCorrectInput = answer == 'y' || answer == 'n';
-            } catch (IOException e){
+            } catch (IOException e) {
                 System.out.println("Произошла ошибка при вводе");
             }
         }
