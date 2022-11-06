@@ -10,23 +10,10 @@ public class Main {
         try(Connection connection = DriverManager.getConnection(connectionUrl)){
             connection.setAutoCommit(false);
 
-            var lines = new FileReader(fileName).read();
-            if (lines.isEmpty())
-                throw new Exception("Файл с данными пустой");
-
-            String[] columnsNames = lines.get(0);
-            int columnsCount = columnsNames.length;
-
-            var metaData = new MetaDataGetter(connection).getMetaData(tableName);
-            var columnsMatches = new MatchesFinder().findMatches(metaData, columnsNames);
-            PreparedStatement insertStatement = new InsertStatementBuilder(connection).getInsertStatement(tableName, columnsNames);
-
-            LinesParser linesParser = new LinesParser(lines, metaData, new PostgresqlParser(), columnsMatches, columnsCount);
-
             try{
-                new DataBaseInserter(connection).insert(insertStatement, linesParser, columnsCount);
+                DataBaseInserter.insert(connection, new FileReader(fileName), tableName);
             } catch (Exception e){
-                System.out.printf("ОШИБКА: %s\n", e.getMessage());
+                printError(e);
                 if (askRollbackData(connection)){
                     System.out.println("Изменения отменены");
                     return;
@@ -37,8 +24,12 @@ public class Main {
             System.out.println("Успешная вставка");
 
         } catch (Exception e) {
-            System.out.printf("ОШИБКА: %s\n", e.getMessage());
+            printError(e);
         }
+    }
+
+    private static void printError(Exception e){
+        System.out.printf("ОШИБКА: %s\n", e.getMessage());
     }
 
     private static boolean askRollbackData(Connection connection) throws SQLException {
