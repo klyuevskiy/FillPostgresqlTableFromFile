@@ -15,9 +15,7 @@ public class DataBaseInserter {
                 .getMetaData();
     }
 
-    private static void findColumnsMatchesErrors
-            (String[] columnsNames, ResultSetMetaData tableMetaData) throws Exception {
-
+    private static void findColumnsMatchesErrors(String[] columnsNames, ResultSetMetaData tableMetaData) throws Exception {
         // колонки, которые есть в таблице
         Set<String> tableColumnsNames = new HashSet<>();
         // уже встреченные в файле колонки
@@ -44,23 +42,22 @@ public class DataBaseInserter {
     }
 
     private static PreparedStatement getInsertStatement(Connection connection, String tableName, String[] columnsNames) throws SQLException {
-        StringBuilder insertQuery = new StringBuilder(String.format("insert into %s (%s", tableName, columnsNames[0]));
+        StringBuilder insertQueryStringBuilder = new StringBuilder(String.format("insert into %s (%s", tableName, columnsNames[0]));
 
         for (int i = 1; i < columnsNames.length; i++) {
-            insertQuery.append(String.format(", %s", columnsNames[i]));
+            insertQueryStringBuilder.append(String.format(", %s", columnsNames[i]));
         }
 
-        insertQuery.append(") values(");
+        insertQueryStringBuilder.append(") values(");
 
-        insertQuery
+        insertQueryStringBuilder
                 .append("?, ".repeat(columnsNames.length - 1))
                 .append("?)");
 
-        return connection.prepareStatement(insertQuery.toString());
+        return connection.prepareStatement(insertQueryStringBuilder.toString());
     }
 
-    public static void insert
-            (Connection connection, FileReader fileReader, String tableName) throws Exception {
+    public static void insert(Connection connection, FileReader fileReader, String tableName) throws Exception {
 
         String[] columnsNames = fileReader.getColumnsNames();
         findColumnsMatchesErrors(columnsNames, getTableMetaData(connection, tableName));
