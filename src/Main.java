@@ -11,7 +11,7 @@ public class Main {
             connection.setAutoCommit(false);
 
             try {
-                DataBaseInserter.insert(connection, new FileReader(fileName), tableName);
+                new DataBaseInserter(connection, tableName).insert(new FileReader(fileName));
             } catch (Exception e) {
                 printError(e);
                 if (askRollbackData(connection)) {
@@ -29,7 +29,7 @@ public class Main {
     }
 
     private static void printError(Exception e) {
-        System.out.printf("ОШИБКА: %s\n", e.getMessage());
+        System.out.printf("%s\n", e.getMessage());
     }
 
     private static boolean askRollbackData(Connection connection) throws SQLException {
