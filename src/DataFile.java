@@ -99,23 +99,23 @@ public class DataFile {
      *
      * @param index индекс нужной колонки
      * @return Значение колонки в текущей строке index
-     * @throws ArrayIndexOutOfBoundsException индекс выходит за допустимые пределы
+     * @throws IndexOutOfBoundsException индекс выходит за допустимые пределы
      * @throws Exception                      не был вызван next
      * @see DataFile#next() получить следующую строку
      */
-    public String getValue(int index) throws ArrayIndexOutOfBoundsException, Exception {
+    public String getValue(int index) throws IndexOutOfBoundsException, Exception {
         if (lastLine == null) {
             throw new Exception("next не был вызван");
         }
         if (columnsIntersection == null) {
             // не строили перечение, значит просто берём значение из файла
             if (index < 0 || index >= fileColumns.length) {
-                throw new ArrayIndexOutOfBoundsException("Недопустимый индекс колонки");
+                throw new IndexOutOfBoundsException("Недопустимый индекс колонки");
             }
             return fileColumns[index];
         } else {
             if (index < 0 || index >= columnsIntersection.getFileColumnsIndexes().size()) {
-                throw new ArrayIndexOutOfBoundsException("Недопустимый индекс колонки");
+                throw new IndexOutOfBoundsException("Недопустимый индекс колонки");
             }
             return fileColumns[columnsIntersection.getFileColumnsIndexes().get(index)];
         }

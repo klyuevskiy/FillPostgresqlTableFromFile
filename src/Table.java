@@ -1,3 +1,4 @@
+import java.security.InvalidParameterException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSetMetaData;
@@ -24,6 +25,8 @@ public class Table {
      * запрос для вставки значений
      */
     private PreparedStatement insertStatement = null;
+
+    private int insertColumnsCount = -1;
 
     /**
      * Создаёт экземпляр таблицы.
@@ -58,7 +61,7 @@ public class Table {
      *
      * @param insertColumns имена колонок для вставки
      * @throws SQLException невозможно подготовить запрос на вставку для данных колонок
-     * @throws Exception    Таблица не содержит заданных колонок
+     * @throws Exception    таблица не содержит заданных колонок
      */
     public void setInsertColumns(Set<String> insertColumns) throws SQLException, Exception {
         StringBuilder insertQueryStringBuilder = new StringBuilder(String.format("insert into %s (", tableName));
@@ -78,22 +81,31 @@ public class Table {
                 .append("?)");
 
         insertStatement = connection.prepareStatement(insertQueryStringBuilder.toString());
+        insertColumnsCount = insertColumns.size();
     }
 
     /**
      * Вставка в таблицу
      *
      * @param values список значений для вставки, соотвествующий заранее указанным колонкам
-     * @throws SQLException ошибка вставки
-     * @throws Exception    не были предварительно указаны колонки для вставки
+     * @throws SQLException              ошибка вставки
+     * @throws InvalidParameterException размер списка параметров не соответствует количеству вствляемых колонок
+     * @throws Exception                 не были предварительно указаны колонки для вставки
      * @see Table#setInsertColumns(Set) задать колонки для вставки
      */
-    public void insert(List<String> values) throws SQLException, Exception {
+    public void insert(List<String> values) throws SQLException, InvalidParameterException, Exception {
         if (insertStatement == null) {
             throw new Exception("Не указаны колонки для вставки");
         }
+        if (insertColumnsCount != values.size()) {
+            throw new InvalidParameterException("Размер списка данных не соотвествует количеству вставляемых колонок");
+        }
         for (int i = 0; i < values.size(); i++) {
-            insertStatement.setString(i + 1, values.get(i));
+            if (values.get(i).equalsIgnoreCase("null")){
+                insertStatement.setString(i + 1, null);
+            } else{
+                insertStatement.setString(i + 1, values.get(i));
+            }
         }
         insertStatement.execute();
     }
