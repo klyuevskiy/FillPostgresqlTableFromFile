@@ -101,9 +101,9 @@ public class Table {
             throw new InvalidParameterException("Размер списка данных не соотвествует количеству вставляемых колонок");
         }
         for (int i = 0; i < values.size(); i++) {
-            if (values.get(i).equalsIgnoreCase("null")){
+            if (values.get(i).equalsIgnoreCase("null")) {
                 insertStatement.setString(i + 1, null);
-            } else{
+            } else {
                 insertStatement.setString(i + 1, values.get(i));
             }
         }

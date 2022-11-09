@@ -71,12 +71,13 @@ public class DataFile {
             getFileColumns();
         }
         try {
-            lastLine = file.readLine().split("\t");
-            checkLineColumnsCount(lastLine.length);
-            if (lastLine == null) {
+            String line = file.readLine();
+            if (line == null) {
                 file.close();
                 return false;
             }
+            lastLine = line.split("\t");
+            checkLineColumnsCount(lastLine.length);
             return true;
         } catch (Exception e) {
             file.close();
@@ -100,7 +101,7 @@ public class DataFile {
      * @param index индекс нужной колонки
      * @return Значение колонки в текущей строке index
      * @throws IndexOutOfBoundsException индекс выходит за допустимые пределы
-     * @throws Exception                      не был вызван next
+     * @throws Exception                 не был вызван next
      * @see DataFile#next() получить следующую строку
      */
     public String getValue(int index) throws IndexOutOfBoundsException, Exception {
@@ -112,12 +113,12 @@ public class DataFile {
             if (index < 0 || index >= fileColumns.length) {
                 throw new IndexOutOfBoundsException("Недопустимый индекс колонки");
             }
-            return fileColumns[index];
+            return lastLine[index];
         } else {
             if (index < 0 || index >= columnsIntersection.getFileColumnsIndexes().size()) {
                 throw new IndexOutOfBoundsException("Недопустимый индекс колонки");
             }
-            return fileColumns[columnsIntersection.getFileColumnsIndexes().get(index)];
+            return lastLine[columnsIntersection.getFileColumnsIndexes().get(index)];
         }
     }
 
@@ -127,7 +128,7 @@ public class DataFile {
      * @return Пересечение колонок из файла и требуемых
      * @see DataFile#setDesiredColumns(Set) задать требуемые колонки
      */
-    public ColumnsIntersection getColumnsIntersect() {
+    public ColumnsIntersection getColumnsIntersection() {
         return columnsIntersection;
     }
 
@@ -143,7 +144,7 @@ public class DataFile {
         for (var column : columns) {
             String lowerCaseColumn = column.toLowerCase();
             if (meetColumns.contains(lowerCaseColumn)) {
-                throw new Exception(String.format("Колонка %s встречается несколько раз", column));
+                throw new Exception(String.format("Колонка %s встречается несколько раз в файле", column));
             }
             meetColumns.add(lowerCaseColumn);
         }

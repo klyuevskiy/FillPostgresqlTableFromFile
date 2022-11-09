@@ -8,7 +8,7 @@ public class ColumnsIntersection {
     /**
      * Пересечение колонок
      */
-    private final Set<String> columnsIntersect;
+    private final Set<String> columnsIntersection;
 
     /**
      * Индексы колонок файла, которые попали в пересечение
@@ -28,17 +28,17 @@ public class ColumnsIntersection {
     /**
      * Создаёт экземпляр пересчения колонок файла с заданными
      *
-     * @param columnsIntersect      пересечение имен колонок
+     * @param columnsIntersection   пересечение имен колонок
      * @param fileColumnsIndexes    индексы колонок из персечения в файле
      * @param missingFileColumns    не вошедшие в пересечение колонки файла
      * @param missingDesiredColumns не вошедшие в пересечение колонки таблицы
      */
-    public ColumnsIntersection(Set<String> columnsIntersect,
+    public ColumnsIntersection(Set<String> columnsIntersection,
                                List<Integer> fileColumnsIndexes,
                                Set<String> missingFileColumns,
                                Set<String> missingDesiredColumns) {
 
-        this.columnsIntersect = columnsIntersect;
+        this.columnsIntersection = columnsIntersection;
         this.fileColumnsIndexes = fileColumnsIndexes;
         this.missingFileColumns = missingFileColumns;
         this.missingDesiredColumns = missingDesiredColumns;
@@ -49,8 +49,8 @@ public class ColumnsIntersection {
      *
      * @return Пересечение колнок
      */
-    public Set<String> getColumnsIntersect() {
-        return columnsIntersect;
+    public Set<String> getColumnsIntersection() {
+        return columnsIntersection;
     }
 
     /**
