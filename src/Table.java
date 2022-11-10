@@ -1,10 +1,8 @@
-import java.security.InvalidParameterException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -34,7 +32,7 @@ public class Table {
      *
      * @param connection соединение с БД
      * @param tableName  название таблицы
-     * @throws SQLException невозоможно получить доступ к таблице
+     * @throws SQLException невозможно получить доступ к таблице
      */
     public Table(Connection connection, String tableName) throws SQLException {
 
@@ -85,27 +83,36 @@ public class Table {
     }
 
     /**
-     * Вставка в таблицу
+     * Установить значение для вставки по индексу колонки
+     * Значения устанавливаются для заранее заданных колонок
      *
-     * @param values список значений для вставки, соотвествующий заранее указанным колонкам
-     * @throws SQLException              ошибка вставки
-     * @throws InvalidParameterException размер списка параметров не соответствует количеству вствляемых колонок
+     * @param index индекс колонки
+     * @param value вставляемое значение
+     * @throws IndexOutOfBoundsException индекс выходит за допустимые границы
      * @throws Exception                 не были предварительно указаны колонки для вставки
      * @see Table#setInsertColumns(Set) задать колонки для вставки
      */
-    public void insert(List<String> values) throws SQLException, InvalidParameterException, Exception {
+    public void setValue(int index, String value) throws IndexOutOfBoundsException, Exception {
         if (insertStatement == null) {
             throw new Exception("Не указаны колонки для вставки");
         }
-        if (insertColumnsCount != values.size()) {
-            throw new InvalidParameterException("Размер списка данных не соотвествует количеству вставляемых колонок");
+        if (index < 0 || index >= insertColumnsCount) {
+            throw new IndexOutOfBoundsException("Индекс выходит за допустимые границы");
         }
-        for (int i = 0; i < values.size(); i++) {
-            if (values.get(i).equalsIgnoreCase("null")) {
-                insertStatement.setString(i + 1, null);
-            } else {
-                insertStatement.setString(i + 1, values.get(i));
-            }
+        insertStatement.setString(index + 1, value);
+    }
+
+    /**
+     * Осуществляет вставку предварительно заданных значений для заданных колонок
+     *
+     * @throws SQLException ошибка вставки
+     * @throws Exception    не были предварительно указаны колонки для вставки
+     * @see Table#setInsertColumns(Set) задать колонки для вставки
+     * @see Table#setValue(int, String) задать вставляемое значение для колонки
+     */
+    public void insert() throws SQLException, Exception {
+        if (insertStatement == null) {
+            throw new Exception("Не указаны колонки для вставки");
         }
         insertStatement.execute();
     }

@@ -5,13 +5,15 @@ import java.util.*;
 /**
  * Класс, который читает данные из файла.
  * Можно задать имена колонок, которые можно получить.
+ * Будет строиться пересечение колонок файла и тех, которые желаете получить
  */
 public class DataFile {
 
     private final BufferedReader file;
 
     /**
-     * Колонки файла
+     * Колонки файла.
+     * Первая строка файла
      */
     private String[] fileColumns = null;
 
@@ -27,7 +29,7 @@ public class DataFile {
 
 
     /**
-     * Создаёт экземпляр класса и открывает файл для чтения.
+     * Создаёт экземпляр класса, открывает файл для чтения.
      *
      * @param filePath путь к файлу
      * @throws FileNotFoundException файл не найден
@@ -37,7 +39,7 @@ public class DataFile {
     }
 
     /**
-     * Получает колонки, которые есть в файле.
+     * Даёт колонки, которые есть в файле.
      *
      * @return массив с именами колонок файла
      * @throws IOException ошибка чтения файла
@@ -59,9 +61,10 @@ public class DataFile {
     }
 
     /**
-     * Считать следующую строку и узнать её наличие.
+     * Считать следующую строку и узнать о её наличие.
+     * Если до этого ни разу не были получены имена колок файла, то они будут считаны.
      *
-     * @return true - есть ли следующая строка в файле. false - нет строк
+     * @return true - есть ли следующая строка в файле, false - нет строк
      * @throws IOException ошибка чтения файла
      * @throws Exception   нарушение формата файла (некорректное количество колонок на новой строке)
      */
@@ -79,7 +82,8 @@ public class DataFile {
             lastLine = line.split("\t");
             checkLineColumnsCount(lastLine.length);
             return true;
-        } catch (Exception e) {
+        } catch (IOException e) {
+            // ошибка чтения файла, сразу закрываем
             file.close();
             throw e;
         }
@@ -88,7 +92,7 @@ public class DataFile {
     /**
      * Закрывает файл.
      *
-     * @throws IOException - ошибка закрытия файла
+     * @throws IOException ошибка закрытия файла
      */
     public void close() throws IOException {
         file.close();
@@ -109,17 +113,21 @@ public class DataFile {
             throw new Exception("next не был вызван");
         }
         if (columnsIntersection == null) {
-            // не строили перечение, значит просто берём значение из файла
+            // не строили пересечение, значит просто берём значение из файла
             if (index < 0 || index >= fileColumns.length) {
                 throw new IndexOutOfBoundsException("Недопустимый индекс колонки");
             }
-            return lastLine[index];
         } else {
             if (index < 0 || index >= columnsIntersection.getFileColumnsIndexes().size()) {
                 throw new IndexOutOfBoundsException("Недопустимый индекс колонки");
             }
-            return lastLine[columnsIntersection.getFileColumnsIndexes().get(index)];
+            index = columnsIntersection.getFileColumnsIndexes().get(index);
         }
+
+        if (lastLine[index].equalsIgnoreCase("null")) {
+            return null;
+        }
+        return lastLine[index];
     }
 
     /**
@@ -133,7 +141,7 @@ public class DataFile {
     }
 
     /**
-     * Проверяет, что колонки в файле не повтрояются.
+     * Проверяет, что колонки не повторяются.
      *
      * @param columns массив имён колонок
      * @throws Exception имена колонок повторяются
@@ -151,22 +159,22 @@ public class DataFile {
     }
 
     /**
-     * Проверяет что количество колонок на новой строке совпадает с начально заданым количеством колонок
+     * Проверяет что количество колонок на новой строке совпадает с начально заданным количеством колонок
      *
      * @param lineColumnsCount количество колонок
-     * @throws Exception количество в строке не соотвествует количеству колонок в файле
+     * @throws Exception количество в строке не соответствует количеству колонок в файле
      */
     private void checkLineColumnsCount(int lineColumnsCount) throws Exception {
         if (lineColumnsCount < fileColumns.length) {
             throw new Exception(String.format(
-                    "Недостаочно столбцов для вставки. " +
-                            "Ожидалось %d, Имеется %d", fileColumns.length, lineColumnsCount
+                    "Слишком мало столбцов в строке. " +
+                            "Должно быть %d, Имеется %d", fileColumns.length, lineColumnsCount
             ));
         }
         if (lineColumnsCount > fileColumns.length) {
             throw new Exception(String.format(
-                    "Слишком много столбцов для вставки. " +
-                            "Ожидалось %d, Имеется %d", fileColumns.length, lineColumnsCount
+                    "Слишком много столбцов в строке. " +
+                            "Должно быть %d, Имеется %d", fileColumns.length, lineColumnsCount
             ));
         }
     }
@@ -175,7 +183,7 @@ public class DataFile {
      * Установить желаемые для извлечения из файла колонки.
      * Строится пересечение с колонками из файла.
      * Возвращает пересечение.
-     * Если до этого не разу не были получены имена колок файла, то они будут считаны.
+     * Если до этого ни разу не были получены имена колок файла, то они будут считаны.
      *
      * @param desiredColumns требуемые для получения из файла колонки
      * @return Пересечение колонок
@@ -188,7 +196,7 @@ public class DataFile {
             getFileColumns();
         }
 
-        // перечечение и пропущенные колонки файла и требуемых
+        // пересечение и пропущенные колонки файла и требуемых
         List<Integer> fileColumnsIndexes = new ArrayList<>();
         Set<String> columnsIntersect = new HashSet<>();
         Set<String> missingFileColumns = new HashSet<>();

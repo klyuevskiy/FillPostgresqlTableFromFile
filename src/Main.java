@@ -47,7 +47,7 @@ public class Main {
      *
      * @param dataFile   класс, отвечающий за работу с файлом
      * @param table      класс, отвечающий за работу с таблицей
-     * @param connection соедиение, нужно для установки точки сохранения
+     * @param connection соединение, нужно для установки точки сохранения
      * @return true - успешная вставка, false - не успешная
      * @throws Exception ошибка при вставке
      */
@@ -56,17 +56,26 @@ public class Main {
         Savepoint savepoint = connection.setSavepoint();
 
         int lineNumber = 1;
-        while (dataFile.next()) {
+        while (true) {
             try {
-                var values = getValues(dataFile);
-                table.insert(values);
-                savepoint = connection.setSavepoint();
+                // сразу инкрементируем, чтобы не проверять ей инкремент на исключениях
                 lineNumber++;
+
+                // может возникнуть исключение, сообщающее о нарушении структуры файла
+                // надо поймать исключение, спросить о нужном действии, если что пропустить строку и продолжить
+                // чтобы была возможность пропустить строку ничего лучше не придумал как доставать новую внутри цикла
+                if (!dataFile.next()){
+                    break;
+                }
+                setValuesToInsert(table, getValuesFromFile(dataFile));
+                table.insert();
+                savepoint = connection.setSavepoint();
             } catch (Exception e) {
                 printError(e);
-                if (getYesNo(String.format("Произошла ошибка при вставке строки. %d\n" +
+                if (getYesNo(String.format("Произошла ошибка при вставке строки %d\n" +
                         "Откатить все вставки и закончить работу (y)\n" +
-                        "Пропустить строку (n)", lineNumber))) {
+                        // lineNumber - 1, так как сразу инкрементировали
+                        "Пропустить строку (n)", lineNumber - 1))) {
                     return false;
                 } else {
                     connection.rollback(savepoint);
@@ -83,13 +92,27 @@ public class Main {
      * @return список значений
      * @throws Exception ошибка получения значений
      */
-    private static List<String> getValues(DataFile dataFile) throws Exception {
+    private static List<String> getValuesFromFile(DataFile dataFile) throws Exception {
         List<String> values = new ArrayList<>();
         int valuesCount = dataFile.getColumnsIntersection().getColumnsIntersection().size();
         for (int i = 0; i < valuesCount; i++) {
             values.add(dataFile.getValue(i));
         }
         return values;
+    }
+
+    /**
+     * Установить значения для вставки в таблицу
+     * Значения должны соответствовать выбранным для вставки колонкам
+     *
+     * @param table  объект, отвечающий за вставку в таблицу
+     * @param values список значений для вставки
+     * @throws Exception ошибка при задании значения
+     */
+    private static void setValuesToInsert(Table table, List<String> values) throws Exception {
+        for (int i = 0; i < values.size(); i++) {
+            table.setValue(i, values.get(i));
+        }
     }
 
     /**
@@ -115,12 +138,12 @@ public class Main {
     /**
      * Выяснить продолжать ли выполнение программы после пересечения
      *
-     * @param columnsIntersection результат персечения
-     * @return true - продожить выполнение программы, false - закончить выполнение программы
+     * @param columnsIntersection результат пересечения
+     * @return true - продолжить выполнение программы, false - закончить выполнение программы
      */
     private static boolean isContinueProgramAfterColumnsIntersection(ColumnsIntersection columnsIntersection) {
         if (columnsIntersection.getColumnsIntersection().size() == 0) {
-            System.out.println("Не было найдено соответсвий колонок таблицы и файла");
+            System.out.println("Не было найдено соответствий колонок таблицы и файла");
             return false;
         }
 
@@ -145,7 +168,7 @@ public class Main {
     /**
      * спрашиваем про откат всех данных
      *
-     * @param message сообщение которое будет выводиться
+     * @param message сообщение, которое будет выводиться
      * @return true - input Yes, false - input No
      */
     private static boolean getYesNo(String message) {
