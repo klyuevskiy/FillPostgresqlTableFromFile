@@ -55,7 +55,7 @@ public class DataFile {
             checkNotRepeatColumns(fileColumns);
             return fileColumns;
         } catch (Exception e) {
-            file.close();
+            close();
             throw e;
         }
     }
@@ -76,7 +76,7 @@ public class DataFile {
         try {
             String line = file.readLine();
             if (line == null) {
-                file.close();
+                close();
                 return false;
             }
             lastLine = line.split("\t");
@@ -84,7 +84,7 @@ public class DataFile {
             return true;
         } catch (IOException e) {
             // ошибка чтения файла, сразу закрываем
-            file.close();
+            close();
             throw e;
         }
     }
